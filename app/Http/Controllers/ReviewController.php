@@ -2,30 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ReviewResource;
 use App\Models\Destination;
 use App\Models\Review;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
-    public function showReview($id)
+    public function showReview(Destination $destination)
     {
-        try {
-            $destination = Destination::findorFail($id)->reviews;
-            return $destination;
-        } catch (\Throwable $th) {
-            return $th;
-        }
+        return $destination->reviews;
     }
 
 
-    public function storeReview($id, Request $request)
+    public function storeReview(Destination $destination, Request $request)
     {
         $request->validate([
             'rating' => "required",
             "comment" => "string|required"
         ]);
-        $destination = Destination::findorFail($id);
 
         $destination->reviews()->create([
             "rating" => $request->rating,

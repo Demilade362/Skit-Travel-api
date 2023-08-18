@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
+use App\Models\FlightBooking;
+use App\Models\HotelBooking;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -21,5 +23,8 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call([DestinationSeeder::class, FlightSeeder::class, HotelSeeder::class, ItinerariesSeeder::class]);
+
+        FlightBooking::factory(10)->create();
+        HotelBooking::factory(10)->create();
     }
 }

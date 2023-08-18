@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\UserRegistration;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AuthLoginRequest;
 use App\Http\Requests\AuthRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -20,6 +22,9 @@ class AuthController extends Controller
             'email' => $request->input('email'),
             'password' => Hash::make($request->input('password'))
         ]);
+
+        Auth::login($user);
+        event(new UserRegistration($user->email));
 
         return response(
             [
@@ -40,6 +45,8 @@ class AuthController extends Controller
                 'message' => "Credientials Not Match Our Records"
             ]);
         }
+
+        Auth::login($user);
 
         return response([
             'user' => $user,
