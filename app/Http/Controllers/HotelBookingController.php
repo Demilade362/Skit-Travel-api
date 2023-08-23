@@ -33,4 +33,30 @@ class HotelBookingController extends Controller
             'message' => 'You have successfully Book an Hotel'
         ]);
     }
+
+    public function updateBookHotel($id, Request $request)
+    {
+        $request->validate(
+            [
+                "hotel_id" => 'integer',
+                'guest_name' => 'string',
+                'guest_email' => 'email',
+                'check_in_date' => "date",
+                'check_out_date' => 'date',
+                'room_type' => ['string', Rule::in(['single', 'double', 'suite'])],
+                'num_guests' => 'integer',
+                'total_amount' => 'decimal:2',
+                'payment_status' => [Rule::in(['paid', 'pending'])],
+            ]
+        );
+
+        $hotel = HotelBooking::findorFail($id);
+        $hotel->update([
+            $request->all()
+        ]);
+
+        return response([
+            'message' => 'You have successfully updated your hotel booked details'
+        ]);
+    }
 }

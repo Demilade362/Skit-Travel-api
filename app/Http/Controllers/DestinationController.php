@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NotifyUser;
 use App\Http\Resources\DestinationResource;
 use App\Models\Destination;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class DestinationController extends Controller
 {
@@ -13,7 +15,7 @@ class DestinationController extends Controller
      */
     public function index()
     {
-        return DestinationResource::collection(Destination::paginate(6)->load('reviews'));
+        return DestinationResource::collection(Destination::paginate(6));
     }
 
     /**
@@ -21,6 +23,12 @@ class DestinationController extends Controller
      */
     public function store(Request $request)
     {
+        $role = Role::findByName('admin', 'web');
+        $user = $request->user();
+        if (!($user->hasRole('admin') && $role->hasPermissionTo('create destination'))) {
+            abort(403, 'You are not Authorized');
+        }
+
         $request->validate([
             'name' => 'required|min:6|string',
             'description' => 'required|string|min:15',
@@ -36,6 +44,8 @@ class DestinationController extends Controller
             'image' => $request->image,
             'rating' => $request->rating
         ]);
+
+        event(new NotifyUser(auth()->user(), 'You Just Created A Destination'));
 
         return response([
             'message' => "Destination Added"
@@ -55,6 +65,13 @@ class DestinationController extends Controller
      */
     public function update(Request $request, Destination $destination)
     {
+        $role = Role::findByName('admin', 'web');
+        $user = $request->user();
+
+        if (!($user->hasRole('admin') && $role->hasPermissionTo("update destination"))) {
+            abort(403, 'You are not Authorized');
+        }
+
         $request->validate([
             'name' => 'string|min:6',
             'description' => 'string|min:15',
@@ -69,6 +86,8 @@ class DestinationController extends Controller
             'image' => $request->image,
             'rating' => $request->rating,
         ]);
+
+        event(new NotifyUser(auth()->user(), "You just Updated $destination->name"));
 
         return response(
             [
@@ -95,9 +114,15 @@ class DestinationController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Destination $destination)
+    public function destroy(Destination $destination, Request $request)
     {
+        $role = Role::findByName('admin', 'web');
+        $user = $request->user();
+        if (!($user->hasRole('admin') && $role->hasPermissionTo('delete destination'))) {
+            abort(403, 'You are not Authorized');
+        }
         $destination->delete();
+        event(new NotifyUser(auth()->user(), 'Destination has been Deleted'));
 
         return response([
             'message' => "Destination Deleted"

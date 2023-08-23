@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NotifyUser;
 use App\Http\Requests\FlightRequest;
 use App\Http\Resources\FlightResource;
 use App\Models\Flight;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class FlightController extends Controller
 {
@@ -22,6 +24,12 @@ class FlightController extends Controller
      */
     public function store(FlightRequest $request)
     {
+        $role = Role::findByName('admin', 'web');
+        $user = $request->user();
+        if (!($user->hasRole('admin') && $role->hasPermissionTo('create flight'))) {
+            abort(403, 'You are not Authorized');
+        }
+
         $request->validated();
 
         Flight::create([
@@ -33,6 +41,8 @@ class FlightController extends Controller
             'arrival_time' => $request->arrival_time,
             'price' => $request->price
         ]);
+
+        event(new NotifyUser(auth()->user(), 'You Just Added a New Flight Details'));
 
         return response([
             'message' => "Flight Record Added Successfully",
@@ -52,6 +62,12 @@ class FlightController extends Controller
      */
     public function update(Request $request, Flight $flight)
     {
+        $role = Role::findByName('admin', 'web');
+        $user = $request->user();
+        if (!($user->hasRole('admin') && $role->hasPermissionTo('update flight'))) {
+            abort(403, 'You are not Authorized');
+        }
+
         $request->validate(
             [
                 'airline' => 'min:5',
@@ -73,6 +89,8 @@ class FlightController extends Controller
             'price' => $request->price
         ]);
 
+        event(new NotifyUser(auth()->user(), "You just updated the flight Details for $flight->airpline"));
+
         return response([
             'message' => "$request->airline Record Has Been Updated Successfully"
         ]);
@@ -81,9 +99,17 @@ class FlightController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Flight $flight)
+    public function destroy(Flight $flight, Request $request)
     {
+        $role = Role::findByName('admin', 'web');
+        $user = $request->user();
+        if (!($user->hasRole('admin') && $role->hasPermissionTo('delete flight'))) {
+            abort(403, 'You are not Authorized');
+        }
+
         $flight->delete();
+
+        event(new NotifyUser(auth()->user(), 'Flight Details Deleted'));
 
         return response([
             'message' => "$flight->airline Record Deleted"

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NotifyUser;
 use App\Http\Requests\ItineraryRequest;
 use App\Http\Resources\ItinerariesResource;
 use App\Models\Itineraries;
@@ -31,6 +32,8 @@ class ItinerariesController extends Controller
             'end_date' => $request->end_date,
             'description' => $request->description
         ]);
+
+        event(new NotifyUser(auth()->user(), 'Itinerary Created'));
 
         return response([
             "message" => "Itinerary Created"
@@ -66,6 +69,8 @@ class ItinerariesController extends Controller
             "description" => $request->description
         ]);
 
+        event(new NotifyUser(auth()->user(), "$itinerary->title Updated"));
+
         return response(
             [
                 "message" => "$itinerary->title Updated"
@@ -79,6 +84,7 @@ class ItinerariesController extends Controller
     public function destroy(Itineraries $itinerary)
     {
         $itinerary->delete();
+        event(new NotifyUser(auth()->user(), "$itinerary->title record deleted"));
 
         return response(
             ['message' => 'Itinerary Deleted'],
